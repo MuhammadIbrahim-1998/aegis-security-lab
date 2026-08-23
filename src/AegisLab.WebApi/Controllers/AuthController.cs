@@ -35,6 +35,8 @@ public class AuthController : ControllerBase
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
+            issuer: "AegisSecurityLab",
+            audience: "AegisSecurityLab.Users",
             claims: claims,
             expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: creds);

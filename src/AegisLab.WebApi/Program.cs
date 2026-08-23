@@ -22,14 +22,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.RequireHttpsMetadata = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = false,
-            ValidateIssuerSigningKey = false,
-            RequireSignedTokens = false,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-            SignatureValidator = (token, parameters) =>
-                new Microsoft.IdentityModel.JsonWebTokens.JsonWebToken(token)
+            ValidateIssuerSigningKey = true,
+            RequireSignedTokens = true,
+            ValidateLifetime = true,
+            ValidateIssuer = true,
+            ValidIssuer = "AegisSecurityLab",
+            ValidateAudience = true,
+            ValidAudience = "AegisSecurityLab.Users",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 
