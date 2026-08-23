@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AegisLab.Core/AegisLab.Core.csproj" />
+    <Project Path="src/AegisLab.Infrastructure/AegisLab.Infrastructure.csproj" />
+    <Project Path="src/AegisLab.WebApi/AegisLab.WebApi.csproj" />
+  </Folder>
+</Solution>

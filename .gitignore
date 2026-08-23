@@ -1,0 +1,11 @@
+# .NET build output
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+
+# Lab runtime logs (server output captured during runs)
+server.stdout.log
+server.stderr.log
