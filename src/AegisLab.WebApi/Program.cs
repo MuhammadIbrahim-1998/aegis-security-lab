@@ -13,8 +13,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var fallbackKey = "AegisLab_SuperSecret_Dev_Key_2024";
-var jwtKey = builder.Configuration["Jwt:Key"] ?? fallbackKey;
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("Jwt:Key not configured. Run 'dotnet user-secrets set Jwt:Key <value>'.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

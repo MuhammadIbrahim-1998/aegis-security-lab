@@ -11,13 +11,18 @@ namespace AegisLab.WebApi.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
+    private readonly IConfiguration _configuration;
+
     private static readonly Dictionary<string, (string Password, string Role)> Users = new()
     {
         ["alice"] = ("password123", "User"),
         ["admin"] = ("admin123", "Admin")
     };
 
-    private const string FallbackKey = "AegisLab_SuperSecret_Dev_Key_2024";
+    public AuthController(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
 
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginRequest request)
@@ -31,7 +36,9 @@ public class AuthController : ControllerBase
             new(ClaimTypes.Role, user.Role)
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(FallbackKey));
+        var jwtKey = _configuration["Jwt:Key"]
+            ?? throw new InvalidOperationException("Jwt:Key not configured. Run 'dotnet user-secrets set Jwt:Key <value>'.");
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
