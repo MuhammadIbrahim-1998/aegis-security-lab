@@ -48,9 +48,9 @@ public class AuthController : ControllerBase
     [HttpGet("admin-panel")]
     public IActionResult AdminPanel()
     {
-        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var username = User.Identity?.Name;
 
-        if (role != "Admin")
+        if (username is null || !Users.TryGetValue(username, out var user) || user.Role != "Admin")
             return Forbid();
 
         return Ok(new { message = "Welcome to the admin panel.", secret = "AEGIS_LAB_FLAG_001" });
