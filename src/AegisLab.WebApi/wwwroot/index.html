@@ -3,81 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>AegisSecurityLab — Dashboard</title>
-<style>
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    background: #0f1117;
-    color: #e6e6e6;
-    display: flex;
-    justify-content: center;
-    padding: 40px 16px;
-  }
-  .container { width: 100%; max-width: 480px; }
-  h1 { font-size: 20px; margin-bottom: 4px; }
-  .subtitle { color: #8a8f98; font-size: 13px; margin-bottom: 24px; }
-  .card {
-    background: #171a21;
-    border: 1px solid #2a2e37;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 16px;
-  }
-  .card h2 { font-size: 15px; margin: 0 0 14px; color: #cfd3da; }
-  input {
-    width: 100%;
-    padding: 10px 12px;
-    margin-bottom: 10px;
-    background: #0f1117;
-    border: 1px solid #2a2e37;
-    border-radius: 6px;
-    color: #e6e6e6;
-    font-size: 14px;
-  }
-  button {
-    width: 100%;
-    padding: 10px 12px;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 4px;
-  }
-  .btn-primary { background: #3b82f6; color: white; }
-  .btn-danger { background: #ef4444; color: white; }
-  .btn-secondary { background: #2a2e37; color: #e6e6e6; }
-  .hidden { display: none; }
-  .badge {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .badge-admin { background: #7c3aed33; color: #a78bfa; }
-  .badge-user { background: #3b82f633; color: #93c5fd; }
-  .msg {
-    padding: 12px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    margin-top: 12px;
-    line-height: 1.5;
-  }
-  .msg-success { background: #16532633; border: 1px solid #22c55e55; color: #86efac; }
-  .msg-error { background: #7f1d1d33; border: 1px solid #ef444455; color: #fca5a5; }
-  .msg-info { background: #1e3a8a33; border: 1px solid #3b82f655; color: #93c5fd; }
-  .log {
-    font-family: 'Consolas', monospace;
-    font-size: 12px;
-    max-height: 180px;
-    overflow-y: auto;
-  }
-  .log div { padding: 6px 0; border-bottom: 1px solid #2a2e37; color: #8a8f98; }
-  .log .ok { color: #86efac; }
-  .log .fail { color: #fca5a5; }
-</style>
+<link rel="stylesheet" href="/site.css">
 </head>
 <body>
 <div class="container">
@@ -88,7 +14,7 @@
     <h2>Login</h2>
     <input id="username" placeholder="Username (try: alice or admin)" />
     <input id="password" type="password" placeholder="Password" />
-    <button class="btn-primary" onclick="login()">Login</button>
+    <button id="loginBtn" class="btn-primary">Login</button>
     <div id="loginMsg"></div>
   </div>
 
@@ -100,15 +26,15 @@
   <div id="adminDashboard" class="hidden">
     <div class="card">
       <h2>Signed in as <span id="adminName"></span> <span id="adminRoleBadge" class="badge"></span></h2>
-      <button class="btn-secondary" onclick="viewAdminPanel()">Open Admin Panel</button>
-      <button class="btn-secondary" onclick="logout()">Logout</button>
+      <button id="adminPanelBtn" class="btn-secondary">Open Admin Panel</button>
+      <button id="logoutBtn" class="btn-secondary">Logout</button>
       <div id="dashboardMsg"></div>
     </div>
 
     <div class="card">
       <h2>Attack Simulator</h2>
-      <div class="subtitle" style="margin-bottom:12px;">Forges a JWT with role=Admin using a random signing key, then attempts to access the admin panel.</div>
-      <button class="btn-danger" onclick="tryForgedAttack()">Try Forged Token Attack</button>
+      <div class="subtitle compact">Forges a JWT with role=Admin using a random signing key, then attempts to access the admin panel.</div>
+      <button id="forgedAttackBtn" class="btn-danger">Try Forged Token Attack</button>
       <div id="attackMsg"></div>
     </div>
 
@@ -118,129 +44,6 @@
     </div>
   </div>
 </div>
-<script>
-const API = "";
-let token = null;
-
-function addLog(text, ok) {
-  const log = document.getElementById("log");
-  if (log.children.length === 1 && log.children[0].textContent === "No activity yet.") {
-    log.innerHTML = "";
-  }
-  const entry = document.createElement("div");
-  entry.className = ok ? "ok" : "fail";
-  entry.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
-  log.prepend(entry);
-}
-
-async function login() {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
-  const msgEl = document.getElementById("loginMsg");
-  msgEl.innerHTML = "";
-
-  try {
-    const res = await fetch(`${API}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
-    });
-
-    if (!res.ok) {
-      addLog(`Login failed for "${username}"`, false);
-      msgEl.innerHTML = `<div class="msg msg-error">Login failed. Check your credentials.</div>`;
-      return;
-    }
-
-    const data = await res.json();
-    token = data.token;
-    addLog(`Login succeeded for "${username}"`, true);
-    await loadProfile();
-  } catch (err) {
-    msgEl.innerHTML = `<div class="msg msg-error">Could not reach server.</div>`;
-  }
-}
-
-async function loadProfile() {
-  const res = await fetch(`${API}/api/auth/profile`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  const data = await res.json();
-
-  document.getElementById("loginCard").classList.add("hidden");
-
-  if (data.role === "Admin") {
-    document.getElementById("adminDashboard").classList.remove("hidden");
-    document.getElementById("userDashboard").classList.add("hidden");
-    document.getElementById("adminName").textContent = data.username;
-    const badge = document.getElementById("adminRoleBadge");
-    badge.textContent = data.role;
-    badge.className = "badge badge-admin";
-  } else {
-    document.getElementById("userDashboard").classList.remove("hidden");
-    document.getElementById("adminDashboard").classList.add("hidden");
-    document.getElementById("userName").textContent = data.username;
-    const badge = document.getElementById("userRoleBadge");
-    badge.textContent = data.role;
-    badge.className = "badge badge-user";
-  }
-}
-
-async function viewAdminPanel() {
-  const msgEl = document.getElementById("dashboardMsg");
-  const res = await fetch(`${API}/api/auth/admin-panel`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-
-  if (res.ok) {
-    const data = await res.json();
-    addLog("Admin panel accessed successfully", true);
-    msgEl.innerHTML = `<div class="msg msg-success">${data.message}<br>Secret: ${data.secret}</div>`;
-  } else {
-    addLog(`Admin panel access denied (${res.status})`, false);
-    msgEl.innerHTML = `<div class="msg msg-error">Access denied (${res.status}). You are not an admin.</div>`;
-  }
-}
-
-function base64url(obj) {
-  return btoa(JSON.stringify(obj)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-
-async function tryForgedAttack() {
-  const msgEl = document.getElementById("attackMsg");
-
-  const header = { alg: "HS256", typ: "JWT" };
-  const payload = {
-    unique_name: "attacker",
-    role: "Admin",
-    exp: Math.floor(Date.now() / 1000) + 3600
-  };
-  const forgedToken = `${base64url(header)}.${base64url(payload)}.fake_signature_${Math.random().toString(36).slice(2)}`;
-
-  const res = await fetch(`${API}/api/auth/admin-panel`, {
-    headers: { Authorization: `Bearer ${forgedToken}` }
-  });
-
-  if (res.ok) {
-    addLog("SECURITY BREACH — forged token was accepted!", false);
-    msgEl.innerHTML = `<div class="msg msg-error">⚠️ SECURITY BREACH — Unauthorized access granted! The server accepted a forged token.</div>`;
-  } else {
-    addLog(`Forged token rejected (${res.status})`, true);
-    msgEl.innerHTML = `<div class="msg msg-success">✅ Attack Blocked — Server rejected the forged token (${res.status}).</div>`;
-  }
-}
-
-function logout() {
-  token = null;
-  document.getElementById("loginCard").classList.remove("hidden");
-  document.getElementById("userDashboard").classList.add("hidden");
-  document.getElementById("adminDashboard").classList.add("hidden");
-  document.getElementById("username").value = "";
-  document.getElementById("password").value = "";
-  document.getElementById("dashboardMsg").innerHTML = "";
-  document.getElementById("attackMsg").innerHTML = "";
-  addLog("Logged out", true);
-}
-</script>
+<script src="/app.js" defer></script>
 </body>
 </html>
