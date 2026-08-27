@@ -40,9 +40,22 @@ works without allowing `'unsafe-inline'`.
 
 ## 3. Burp Suite — Traffic Interception
 
-[Pending — this section will be updated after Burp Suite testing.]
+A request was intercepted in Burp Suite and modified to test token validation
+and response headers:
+
+1. **Tampered token → Admin Panel** — `GET /api/auth/admin-panel` with a Bearer
+   token whose signature was manually corrupted — returned **401 Unauthorized**
+   with `WWW-Authenticate: Bearer error="invalid_token"`.
+
+The security headers were also confirmed in the intercepted response —
+`Content-Security-Policy`, `X-Frame-Options`, and `X-Content-Type-Options` were
+all present, confirming that the **VULN-04** header fix is live.
+
+**Result:** The tampered token was rejected, and the VULN-04 security headers were
+confirmed on the response.
 
 ---
 
 **Overall status:** All four vulnerabilities (VULN-01 through VULN-04) are fixed
-and have been verified with two independent external tools (Postman and ZAP).
+and have been verified with three independent external tools (Postman, ZAP, and
+Burp Suite).
