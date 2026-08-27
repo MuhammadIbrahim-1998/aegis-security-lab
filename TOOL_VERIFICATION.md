@@ -1,25 +1,25 @@
 # External Tool Verification
 
-> Yeh document teen external security testing tools se AegisSecurityLab ko 
-> test karne ka record hai — pehle fixes verify karne ke liye, phir naye 
-> issues dhoondne ke liye.
+> This document records the results of testing AegisSecurityLab with three
+> external security testing tools — first to verify the previously applied
+> fixes, and then to identify any new issues.
 
 ## 1. Postman — Manual API Testing
 
-Teen requests banayi gayin:
+Three requests were created and executed:
 
-1. **Login (admin)** — POST /api/auth/login — 200 OK, JWT token mila
-2. **Legit token -> Admin Panel** — GET /api/auth/admin-panel with valid Bearer token 
-   — 200 OK, secret (AEGIS_LAB_FLAG_001) mila
-3. **Tampered token -> Admin Panel** — same request but token ke aakhri characters 
-   manually corrupt kiye — 401 Unauthorized
+1. **Login (admin)** — `POST /api/auth/login` — returned **200 OK** with a JWT token.
+2. **Legitimate token → Admin Panel** — `GET /api/auth/admin-panel` with a valid
+   Bearer token — returned **200 OK** with the secret (`AEGIS_LAB_FLAG_001`).
+3. **Tampered token → Admin Panel** — same request, but the trailing characters of
+   the token were manually corrupted — returned **401 Unauthorized**.
 
-**Nateeja:** Signature validation fix (VULN-01) confirmed working — koi bhi tampered 
-token reject ho raha hai.
+**Result:** The signature validation fix (**VULN-01**) is confirmed working — any
+tampered token is rejected.
 
 ## 2. OWASP ZAP — Automated Vulnerability Scan
 
-Automated Scan chalaya gaya http://localhost:5199 ke against. 4 alerts mile:
+An automated scan was run against `http://localhost:5199`. Four alerts were reported:
 
 | Alert | Risk | CWE |
 |---|---|---|
@@ -28,20 +28,21 @@ Automated Scan chalaya gaya http://localhost:5199 ke against. 4 alerts mile:
 | X-Content-Type-Options Header Missing | Low | CWE-693 |
 | Modern Web Application | Informational | — |
 
-Koi High-risk issue nahi mila — core JWT authentication/authorization fixes 
-(VULN-01/02/03) is scan mein flag nahi hue, jo unki effectiveness confirm karta hai.
+No high-risk issues were found — the core JWT authentication/authorization fixes
+(VULN-01/02/03) were not flagged by this scan, which confirms their effectiveness.
 
-**Action taken:** Teen header issues fix kiye (VULN-04) — Program.cs mein middleware 
-add kiya jo har response mein CSP, X-Frame-Options, aur X-Content-Type-Options 
-headers set karta hai. Dashboard (wwwroot) ko bhi refactor kiya — inline scripts/styles 
-ko external app.js aur site.css files mein move kiya, taake strict CSP (default-src 'self') 
-kaam kar sake bina 'unsafe-inline' allow kiye.
+**Action taken:** The three header issues were fixed (**VULN-04**) — a middleware
+was added in `Program.cs` that sets the `Content-Security-Policy`,
+`X-Frame-Options`, and `X-Content-Type-Options` headers on every response. The
+dashboard (`wwwroot`) was also refactored — inline scripts and styles were moved
+to external `app.js` and `site.css` files, so the strict CSP (`default-src 'self'`)
+works without allowing `'unsafe-inline'`.
 
 ## 3. Burp Suite — Traffic Interception
 
-[Pending — is section ko Burp Suite testing ke baad update karenge]
+[Pending — this section will be updated after Burp Suite testing.]
 
 ---
 
-**Overall status:** Sab 4 vulnerabilities (VULN-01 se VULN-04) fixed aur do 
-independent external tools (Postman, ZAP) se verify ho chuki hain.
+**Overall status:** All four vulnerabilities (VULN-01 through VULN-04) are fixed
+and have been verified with two independent external tools (Postman and ZAP).
